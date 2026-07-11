@@ -43,13 +43,17 @@ public class ExprGetJson extends SimpleExpression<Object> {
 
     private Expression<String> key;
     private Expression<Integer> index;
-    private Expression<JsonElement> json;
+    private Expression<?> json;
 
     @Override
     protected Object @NotNull [] get(@NotNull Event e) {
         List<Object> values = new ArrayList<>();
-        for (JsonElement jsonElement : this.json.getArray(e)){
-            Json json = new Json(jsonElement.isJsonObject() ? jsonElement.getAsJsonObject() : jsonElement.getAsJsonArray(), e);
+        // A variable matching %jsonobjects/jsonarrays% yields a plain Object[], so the values must be filtered rather than cast.
+        for (Object value : this.json.getArray(e)){
+            if (!(value instanceof JsonElement jsonElement)){
+                continue;
+            }
+            Json json = new Json(jsonElement, e);
             if (key != null) {
                 String key = this.key.getSingle(e);
                 if (key == null){
@@ -61,7 +65,7 @@ public class ExprGetJson extends SimpleExpression<Object> {
                 if (index == null){
                     return new Object[]{};
                 }
-                index = index+(instance.getConfig().getBoolean("use-skript-index", false) ? 1 : 0);
+                index = index-(instance.getConfig().getBoolean("use-skript-index", false) ? 1 : 0);
                 values.add(json.get(index));
             }
         }

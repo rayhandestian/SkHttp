@@ -42,13 +42,17 @@ public class EffJsonEdit extends Effect {
     private int matchedPattern;
     private Expression<String> key;
     private Expression<Object> value;
-    private Expression<JsonElement> json;
+    private Expression<?> json;
     private boolean first;
     private Expression<Integer> index;
 
     @Override
     protected void execute(@NotNull Event e) {
-        for (JsonElement element : json.getArray(e)){
+        // A variable matching %jsonobjects/jsonarrays% yields a plain Object[], so the values must be filtered rather than cast.
+        for (Object jsonValue : json.getArray(e)){
+            if (!(jsonValue instanceof JsonElement element)){
+                continue;
+            }
             if (matchedPattern == 0){
                 if (this.value == null){
                     return;
@@ -106,14 +110,14 @@ public class EffJsonEdit extends Effect {
         if (matchedPattern == 0){
             key = (Expression<String>) exprs[0];
             value = (Expression<Object>) exprs[1];
-            json = (Expression<JsonElement>) exprs[2];
+            json = exprs[2];
         } else if (matchedPattern == 1){
             first = parseResult.hasTag("first");
             value = (Expression<Object>) exprs[0];
-            json = (Expression<JsonElement>) exprs[1];
+            json = exprs[1];
         } else if (matchedPattern == 2){
             index = (Expression<Integer>) exprs[0];
-            json = (Expression<JsonElement>) exprs[1];
+            json = exprs[1];
         }
         if (this.value instanceof UnparsedLiteral) {
             value = LiteralUtils.defendExpression(value);

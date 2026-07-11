@@ -1,15 +1,44 @@
-# **SkHttp**
+# SkHttp
 
 [![SkriptHubViewTheDocs](http://skripthub.net/static/addon/ViewTheDocsButton.png)](http://skripthub.net/docs/?addon=SkHttp)
 
+HTTP client, HTTP server, WebSockets and Discord webhooks for [Skript](https://github.com/SkriptLang/Skript).
 
-*You need *[*Skript 2.7.0*](https://github.com/SkriptLang/Skript)* and up to use.*
+This is a maintained fork of [Fusezion/SkHttp](https://github.com/Fusezion/SkHttp) (originally by aabss), which was archived in 2026. The 1.6.0 line modernizes the build, fixes long-standing bugs and keeps the addon working on current Skript releases.
 
+## Requirements
 
-This addon is just a random addon I made to support/add http/web related things. Either message me on skUnity or [join my Discord](https://discord.gg/66DF7pMdnp) (I am more active on discord)
+- Java 21 or newer
+- Skript 2.10 or newer (tested against 2.15.4)
+- A Bukkit-based server (Paper recommended)
 
-![https://bstats.org/signatures/bukkit/skhttp.svg](https://bstats.org/signatures/bukkit/skhttp.svg)
+Versions 1.5 and older support Skript 2.7+ on Java 17 and remain available from the original repository's releases.
 
-For any support or suggestions, join my Discord [here](https://discord.gg/66DF7pMdnp)!
+## Features
 
-If you are instead looking for source code or a list of all syntaxes visit my GitHub page [here](https://github.com/aabssmc/SkHttp)!
+- **HTTP server**: host endpoints and static sites from Skript, respond to requests with JSON
+- **HTTP client**: build and send sync or async requests with headers, bodies, timeouts and file uploads
+- **WebSockets**: connect to WebSocket servers and react to messages with Skript events
+- **Discord webhooks**: build embeds and send webhook messages
+- **JSON**: create, read and edit JSON values (for heavy JSON work, consider the excellent [skJson](https://github.com/cooffeeRequired/skJson))
+
+## Example
+
+```applescript
+on script load:
+    set {-server} to new http server with port 8080
+    create endpoint using {-server}:
+        method: "GET"
+        path: "status"
+        trigger:
+            respond with code 200 and message "{""online"": true}"
+    start {-server}
+```
+
+## Building
+
+```
+./gradlew shadowJar
+```
+
+The jar is written to `build/libs/`. Java 21+ is required to build.

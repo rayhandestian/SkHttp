@@ -38,7 +38,7 @@ public class CondJsonHas extends Condition {
         }
     }
 
-    private Expression<JsonElement> json;
+    private Expression<?> json;
     private Expression<Object> object;
     private boolean key;
 
@@ -48,7 +48,15 @@ public class CondJsonHas extends Condition {
         if (object == null){
             return false;
         }
-        for (JsonElement element : json.getArray(e)){
+        // A variable matching %jsonarrays/jsonobjects% yields a plain Object[], so the values must be filtered rather than cast.
+        Object[] values = json.getArray(e);
+        if (values.length == 0){
+            return false;
+        }
+        for (Object value : values){
+            if (!(value instanceof JsonElement element)){
+                return false;
+            }
             if (key) {
                 if (!new Json(element, e).hasKey(Classes.toString(object), e)) {
                     return false;
@@ -69,7 +77,7 @@ public class CondJsonHas extends Condition {
 
     @Override
     public boolean init(Expression<?>[] exprs, int matchedPattern, @NotNull Kleenean isDelayed, SkriptParser.@NotNull ParseResult parseResult) {
-        json = (Expression<JsonElement>) exprs[0];
+        json = exprs[0];
         object = (Expression<Object>) exprs[1];
         key = parseResult.hasTag("key");
         if (this.object instanceof UnparsedLiteral) {
