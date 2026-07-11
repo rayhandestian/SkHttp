@@ -2,11 +2,11 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
     id "java"
-    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "com.gradleup.shadow" version "9.4.3"
 }
 
 group = "lol.aabss"
-version = "1.5"
+version = "1.6.0"
 
 repositories {
     mavenCentral()
@@ -20,7 +20,7 @@ dependencies {
     compileOnly "org.jetbrains:annotations:24.0.0"
     compileOnly("com.github.SkriptLang:skript-reflect:2.4-dev1") { transitive = false }
     compileOnly "org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT"
-    compileOnly("com.github.SkriptLang:Skript:2.7.0") { transitive = false }
+    compileOnly("com.github.SkriptLang:Skript:2.15.4") { transitive = false }
     implementation "com.github.ItsRadiiX:Discord-Webhooks:3df5653b8b"
 }
 
@@ -34,9 +34,9 @@ java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
 
-def oldestJava = 17
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += ['-source', '' + oldestJava, '-target', '' + oldestJava]
+    options.release.set(21)
+    options.encoding = "UTF-8"
 }
 
 processResources {
