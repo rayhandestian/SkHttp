@@ -2,11 +2,13 @@ package lol.aabss.skhttp.objects;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import lol.aabss.skhttp.SkHttp;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class WebHandler implements HttpHandler {
     private final File webFilesDirectory;
@@ -17,35 +19,52 @@ public class WebHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String requestURI = exchange.getRequestURI().getPath();
-        if (!requestURI.endsWith("/")) {
-            String redirectURI = requestURI + "/";
-            exchange.getResponseHeaders().set("Location", redirectURI);
-            exchange.sendResponseHeaders(301, -1);
-            return;
-        }
-        String relativePath = requestURI.substring(requestURI.indexOf('/', 1) + 1);
-        if (relativePath.isEmpty() || relativePath.equals("/")) {
-            relativePath = "index.html";
-        }
-        File fileRequested = new File(webFilesDirectory, relativePath);
-        if (fileRequested.exists() && !fileRequested.isDirectory()) {
-            byte[] bytes = new byte[(int) fileRequested.length()];
-            try (FileInputStream fis = new FileInputStream(fileRequested)) {
-                fis.read(bytes);
+        try (exchange) {
+            String contextPath = exchange.getHttpContext().getPath();
+            String requestPath = exchange.getRequestURI().getPath();
+            String relativePath = requestPath.substring(Math.min(contextPath.length(), requestPath.length()));
+            while (relativePath.startsWith("/")) {
+                relativePath = relativePath.substring(1);
             }
-            String mimeType = getMimeType(fileRequested.getName());
-            exchange.getResponseHeaders().set("Content-Type", mimeType);
-            exchange.sendResponseHeaders(200, bytes.length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(bytes);
-            os.close();
-        } else {
-            String response = "404 (Not Found)";
-            exchange.sendResponseHeaders(404, response.length());
-            OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
+            File fileRequested = relativePath.isEmpty()
+                    ? webFilesDirectory
+                    : new File(webFilesDirectory, relativePath);
+            // The URI path arrives percent-decoded, so ".." segments must not escape the site directory.
+            String canonicalRoot = webFilesDirectory.getCanonicalPath();
+            String canonicalRequested = fileRequested.getCanonicalPath();
+            if (!canonicalRequested.equals(canonicalRoot) && !canonicalRequested.startsWith(canonicalRoot + File.separator)) {
+                respondNotFound(exchange);
+                return;
+            }
+            if (fileRequested.isDirectory()) {
+                // Relative asset links in the served pages only resolve when directory URLs end with a slash.
+                if (!requestPath.endsWith("/")) {
+                    exchange.getResponseHeaders().set("Location", requestPath + "/");
+                    exchange.sendResponseHeaders(301, -1);
+                    return;
+                }
+                fileRequested = new File(fileRequested, "index.html");
+            }
+            if (fileRequested.isFile()) {
+                byte[] bytes = Files.readAllBytes(fileRequested.toPath());
+                exchange.getResponseHeaders().set("Content-Type", getMimeType(fileRequested.getName()));
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+            } else {
+                respondNotFound(exchange);
+            }
+        } catch (IOException e) {
+            SkHttp.LOGGER.debug("Client disconnected while being served a site file: " + e.getMessage());
+        }
+    }
+
+    private void respondNotFound(HttpExchange exchange) throws IOException {
+        byte[] response = "404 (Not Found)".getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(404, response.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(response);
         }
     }
 

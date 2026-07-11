@@ -12,6 +12,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HttpExchange {
     public HttpExchange(com.sun.net.httpserver.HttpExchange exchange, String path) {
@@ -22,41 +23,57 @@ public class HttpExchange {
 
     private final String path;
     public com.sun.net.httpserver.HttpExchange exchange;
+    private final AtomicBoolean responded = new AtomicBoolean(false);
+    private String requestBody;
+    private String responseBody;
 
     public void respond(int responseCode){
         respond(null, responseCode);
     }
 
     public void respond(Object response, int responseCode){
+        Gson gson;
+        if (SkHttp.instance.getConfig().getBoolean("pretty-print-json", true)) {
+            gson = new GsonBuilder().setPrettyPrinting().create();
+        } else {
+            gson = new GsonBuilder().create();
+        }
+        String string = null;
+        if (response instanceof JsonElement) {
+            string = gson.toJson(response);
+        } else if (response != null){
+            try {
+                JsonElement element = JsonParser.parseString(response.toString());
+                string = gson.toJson(element);
+            } catch (Exception ignored){
+                string = response.toString();
+            }
+        }
+        if (!responded.compareAndSet(false, true)) {
+            SkHttp.LOGGER.warn("A response was already sent for " + method() + " " + uri() + ", ignoring.");
+            return;
+        }
         try {
-            Gson gson;
-            if (SkHttp.instance.getConfig().getBoolean("pretty-print-json", true)) {
-                gson = new GsonBuilder().setPrettyPrinting().create();
-            } else {
-                gson = new GsonBuilder().create();
-            }
-            String string = null;
-            if (response instanceof JsonElement) {
-                string = gson.toJson(response);
-            } else if (response != null){
-                try {
-                    JsonElement element = JsonParser.parseString(response.toString());
-                    string = gson.toJson(element);
-                } catch (Exception ignored){
-                    string = response.toString();
-                }
-            }
             if (string == null){
                 exchange.sendResponseHeaders(responseCode, -1);
             } else {
-                exchange.sendResponseHeaders(responseCode, string.getBytes().length);
-                OutputStream os = exchange.getResponseBody();
-                os.write(string.getBytes());
-                os.close();
+                byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(responseCode, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+                responseBody = string;
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            // The client aborted the connection before the response was written (browser refresh spam, timeouts). Not recoverable and not a script error, so don't throw.
+            SkHttp.LOGGER.debug("Client disconnected before the response could be sent for " + method() + " " + uri());
+        } finally {
+            exchange.close();
         }
+    }
+
+    public boolean hasResponded(){
+        return responded.get();
     }
 
     public Object attribute(String key){
@@ -84,19 +101,19 @@ public class HttpExchange {
     }
 
     public String requestBody(){
-        try {
-            return new String(exchange.getRequestBody().readAllBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        // The underlying stream can only be consumed once, so the first read is cached.
+        if (requestBody == null) {
+            try {
+                requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                requestBody = "";
+            }
         }
+        return requestBody;
     }
 
     public String responseBody(){
-        try {
-            return new String(exchange.getRequestBody().readAllBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return responseBody;
     }
 
     public Headers requestHeaders(){

@@ -1,9 +1,17 @@
 package lol.aabss.skhttp.objects;
 
+import lol.aabss.skhttp.SkHttp;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
 public class Logger{
+
+    public void debug(Object message){
+        if (SkHttp.instance != null && SkHttp.instance.getConfig().getBoolean("debug", false)) {
+            Bukkit.getConsoleSender().sendMessage(ChatColor.GOLD +"[SkHttp] "
+                    + ChatColor.translateAlternateColorCodes('&', "&r&7"+ message));
+        }
+    }
 
     public void success(Object message){
         Bukkit.getConsoleSender().sendMessage(ChatColor.GOLD +"[SkHttp] "

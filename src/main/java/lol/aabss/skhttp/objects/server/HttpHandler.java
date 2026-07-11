@@ -1,5 +1,7 @@
 package lol.aabss.skhttp.objects.server;
 
+import lol.aabss.skhttp.SkHttp;
+
 import java.io.IOException;
 
 public class HttpHandler {
@@ -13,7 +15,7 @@ public class HttpHandler {
         try {
             handler.handle(exchange.exchange);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            SkHttp.LOGGER.debug("Handler failed for " + exchange.method() + " " + exchange.uri() + ": " + e.getMessage());
         }
     }
 }

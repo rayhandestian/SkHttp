@@ -11,3 +11,6 @@ use-skript-index: false
 
 # whether json elements should be added
 json-elements: true
+
+# log extra diagnostic messages, such as clients disconnecting mid-response
+debug: false

@@ -15,6 +15,7 @@ import ch.njol.util.Kleenean;
 import lol.aabss.skhttp.SkHttp;
 import lol.aabss.skhttp.objects.server.HttpExchange;
 import lol.aabss.skhttp.objects.server.HttpServer;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -112,12 +113,13 @@ public class SecCreateEndpoint extends Section {
     protected @Nullable TriggerItem walk(@NotNull Event event) {
         Consumer<HttpExchange> consumer;
         if (trigger != null) {
-            consumer = o -> {
+            // The JDK http server invokes this on its own dispatcher thread; Skript triggers and most Bukkit API are only safe on the main thread. The exchange stays open until the trigger responds.
+            consumer = o -> Bukkit.getScheduler().runTask(SkHttp.instance, () -> {
                 SkHttp.LAST_EXCHANGE = o;
                 CreateEndpointEvent endpoint = new CreateEndpointEvent(o);
                 Variables.setLocalVariables(endpoint, Variables.copyLocalVariables(event));
                 trigger.execute(endpoint);
-            };
+            });
         } else {
             consumer = null;
         }

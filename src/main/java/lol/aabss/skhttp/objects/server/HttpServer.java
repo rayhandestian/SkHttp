@@ -39,10 +39,14 @@ public class HttpServer {
             registeredContexts.remove("/"+name);
         }
         HttpContext context = new HttpContext(server.createContext("/" + name, exchange1 -> {
-            if (exchange1.getRequestMethod().equals(method)) {
+            if (exchange == null) {
+                exchange1.sendResponseHeaders(204, -1);
+                exchange1.close();
+            } else if (exchange1.getRequestMethod().equalsIgnoreCase(method)) {
                 exchange.accept(new HttpExchange(exchange1, name));
             } else {
                 exchange1.sendResponseHeaders(405, -1); // Method Not Allowed
+                exchange1.close();
             }
         }));
         registeredContexts.add(context.path());
@@ -58,13 +62,13 @@ public class HttpServer {
     }
 
     public void deleteEndpoint(String name){
-        if (registeredContexts.contains("/"+name)){
+        if (registeredContexts.remove("/"+name)){
             server.removeContext("/"+name);
         }
     }
 
     public void deleteEndpoint(HttpContext context){
-        if (registeredContexts.contains(context.path())){
+        if (registeredContexts.remove(context.path())){
             server.removeContext(context.path());
         }
     }
