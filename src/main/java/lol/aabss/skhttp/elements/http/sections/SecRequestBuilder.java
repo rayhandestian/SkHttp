@@ -15,6 +15,7 @@ import ch.njol.skript.util.LiteralUtils;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
+import lol.aabss.skhttp.SkHttp;
 import lol.aabss.skhttp.objects.RequestObject;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class SecRequestBuilder extends Section {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{(.*?)}");
 
     private static final EntryValidator.EntryValidatorBuilder ENTRY_VALIDATOR = EntryValidator.builder();
-    private static EntryContainer ENTRY_CONTAINER;
+    private EntryContainer entryContainer;
     private Expression<String> url;
     private Expression<String> method;
     private Expression<Object> body;
@@ -83,14 +84,14 @@ public class SecRequestBuilder extends Section {
 
     @Override
     public boolean init(Expression<?> @NotNull [] exprs, int matchedPattern, @NotNull Kleenean isDelayed, SkriptParser.@NotNull ParseResult parseResult, @NotNull SectionNode sectionNode, @NotNull List<TriggerItem> triggerItems) {
-        ENTRY_CONTAINER = ENTRY_VALIDATOR.build().validate(sectionNode);
-        if (ENTRY_CONTAINER == null) return false;
-        this.url = (Expression<String>) ENTRY_CONTAINER.getOptional("url", false);
+        entryContainer = ENTRY_VALIDATOR.build().validate(sectionNode);
+        if (entryContainer == null) return false;
+        this.url = (Expression<String>) entryContainer.getOptional("url", false);
         if (this.url == null) return false;
-        this.method = (Expression<String>) ENTRY_CONTAINER.getOptional("method", false);
+        this.method = (Expression<String>) entryContainer.getOptional("method", false);
         if (this.method == null) return false;
-        this.body = (Expression<Object>) ENTRY_CONTAINER.getOptional("body", false);
-        this.timeout = (Expression<Timespan>) ENTRY_CONTAINER.getOptional("timeout", false);
+        this.body = (Expression<Object>) entryContainer.getOptional("body", false);
+        this.timeout = (Expression<Timespan>) entryContainer.getOptional("timeout", false);
         if (this.body instanceof UnparsedLiteral) {
             this.body = LiteralUtils.defendExpression(body);
         }
@@ -140,8 +141,9 @@ public class SecRequestBuilder extends Section {
 
     @Override
     protected @Nullable TriggerItem walk(@NotNull Event e) {
-        ENTRY_CONTAINER.getSource().convertToEntries(-1, ":");
-        loadHeaders(ENTRY_CONTAINER.getSource(), e);
+        entryContainer.getSource().convertToEntries(-1, ":");
+        headers.clear();
+        loadHeaders(entryContainer.getSource(), e);
         execute(e);
         return super.walk(e, false);
     }
@@ -166,6 +168,13 @@ public class SecRequestBuilder extends Section {
         if (var == null) {
             return;
         }
+        URI parsedUri;
+        try {
+            parsedUri = URI.create(uri);
+        } catch (IllegalArgumentException ex) {
+            SkHttp.LOGGER.warn("Invalid request url: " + uri);
+            return;
+        }
         HttpRequest.Builder request;
         HttpRequest.BodyPublisher publisher;
         Path pathRequest = null;
@@ -173,19 +182,13 @@ public class SecRequestBuilder extends Section {
         if (body == null) {
             publisher = HttpRequest.BodyPublishers.noBody();
             request = HttpRequest.newBuilder()
-                    .uri(URI.create(uri));
-            switch (method.toUpperCase()){
-                case "POST": request.POST(publisher);
-                case "GET": request.GET();
-                case "PUT": request.PUT(publisher);
-                case "DELETE": request.DELETE();
-                default: request.method(method, publisher);
-            }
+                    .uri(parsedUri);
+            request.method(method.toUpperCase(), publisher);
         } else {
             Object body = this.body.getSingle(e);
             if (body != null) {
                 request = HttpRequest.newBuilder()
-                        .uri(URI.create(uri));
+                        .uri(parsedUri);
                 if (SKRIPT_REFLECT_SUPPORTED && body instanceof com.btk5h.skriptmirror.ObjectWrapper){
                     body = ((com.btk5h.skriptmirror.ObjectWrapper) body).get();
                 }
