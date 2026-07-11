@@ -43,7 +43,10 @@ public class HttpServer {
                 exchange1.sendResponseHeaders(204, -1);
                 exchange1.close();
             } else if (exchange1.getRequestMethod().equalsIgnoreCase(method)) {
-                exchange.accept(new HttpExchange(exchange1, name));
+                HttpExchange wrapped = new HttpExchange(exchange1, name);
+                // Read the body here on the dispatcher thread: the trigger runs on the main thread, which must never block on client I/O.
+                wrapped.requestBody();
+                exchange.accept(wrapped);
             } else {
                 exchange1.sendResponseHeaders(405, -1); // Method Not Allowed
                 exchange1.close();

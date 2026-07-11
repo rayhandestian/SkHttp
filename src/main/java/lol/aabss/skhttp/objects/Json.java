@@ -140,6 +140,10 @@ public class Json {
         } else if (SKRIPT_REFLECT_SUPPORTED && object instanceof com.btk5h.skriptmirror.ObjectWrapper) {
             return remove(((com.btk5h.skriptmirror.ObjectWrapper) object).get(), all, e);
         } else if (object instanceof JsonElement) {
+            // When removing a single element, prefer the exact instance the script referenced so a value-equal duplicate elsewhere is not removed instead.
+            if (!all && removeMatching(candidate -> candidate == object, false, true)) {
+                return this;
+            }
             return removeMatching(candidate -> candidate.equals(object), all);
         } else if (object instanceof String){
             return removeMatching(candidate -> candidate.isJsonPrimitive() && candidate.getAsJsonPrimitive().isString() && candidate.getAsString().equals(object), all);
@@ -169,22 +173,34 @@ public class Json {
 
     // Gson's asList/asMap are live views, so matches are collected against a copy before removing to avoid ConcurrentModificationException.
     private Json removeMatching(Predicate<JsonElement> matcher, boolean all) {
+        removeMatching(matcher, all, false);
+        return this;
+    }
+
+    private boolean removeMatching(Predicate<JsonElement> matcher, boolean all, boolean identity) {
+        boolean removed = false;
         if (element instanceof JsonArray array) {
             for (JsonElement candidate : new ArrayList<>(array.asList())) {
                 if (matcher.test(candidate)) {
-                    array.remove(candidate);
-                    if (!all) break;
+                    if (identity) {
+                        array.asList().removeIf(entry -> entry == candidate);
+                    } else {
+                        array.remove(candidate);
+                    }
+                    removed = true;
+                    if (!all) return true;
                 }
             }
         } else if (element instanceof JsonObject object) {
             for (String key : new ArrayList<>(object.keySet())) {
                 if (matcher.test(object.get(key))) {
                     object.remove(key);
-                    if (!all) break;
+                    removed = true;
+                    if (!all) return true;
                 }
             }
         }
-        return this;
+        return removed;
     }
 
     public Object get(String key) {
@@ -284,7 +300,7 @@ public class Json {
                     return true;
                 }
             }
-        } else {
+        } else if (element instanceof JsonArray){
             return ((JsonArray) element).contains(toJsonElement(key, e));
         }
         return false;
@@ -300,7 +316,7 @@ public class Json {
                     return true;
                 }
             }
-        } else {
+        } else if (element instanceof JsonArray){
             return ((JsonArray) element).contains(toJsonElement(object, e));
         }
         return false;

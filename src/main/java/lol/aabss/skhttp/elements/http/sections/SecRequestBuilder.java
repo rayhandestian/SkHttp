@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -175,6 +176,12 @@ public class SecRequestBuilder extends Section {
             SkHttp.LOGGER.warn("Invalid request url: " + uri);
             return;
         }
+        // HttpRequest.Builder.uri also rejects scheme-less and non-http uris with an exception, so guard those here too.
+        String scheme = parsedUri.getScheme();
+        if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+            SkHttp.LOGGER.warn("Invalid request url (must start with http:// or https://): " + uri);
+            return;
+        }
         HttpRequest.Builder request;
         HttpRequest.BodyPublisher publisher;
         Path pathRequest = null;
@@ -183,7 +190,7 @@ public class SecRequestBuilder extends Section {
             publisher = HttpRequest.BodyPublishers.noBody();
             request = HttpRequest.newBuilder()
                     .uri(parsedUri);
-            request.method(method.toUpperCase(), publisher);
+            request.method(method.toUpperCase(Locale.ROOT), publisher);
         } else {
             Object body = this.body.getSingle(e);
             if (body != null) {
@@ -220,7 +227,7 @@ public class SecRequestBuilder extends Section {
                 } else {
                     publisher = HttpRequest.BodyPublishers.ofString(String.valueOf(body));
                 }
-                request.method(method.toUpperCase(), publisher);
+                request.method(method.toUpperCase(Locale.ROOT), publisher);
             } else {
                 return;
             }

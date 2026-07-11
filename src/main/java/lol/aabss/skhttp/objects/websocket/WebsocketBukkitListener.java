@@ -14,7 +14,12 @@ public class WebsocketBukkitListener implements WebSocket.Listener {
 
     // These callbacks run on the JDK WebSocket executor, but Bukkit only allows synchronous events to be fired from the main thread. Buffers are decoded before scheduling because the JDK may reuse them once the callback returns.
     private static void callSync(Event event) {
-        Bukkit.getScheduler().runTask(SkHttp.instance, () -> Bukkit.getPluginManager().callEvent(event));
+        try {
+            Bukkit.getScheduler().runTask(SkHttp.instance, () -> Bukkit.getPluginManager().callEvent(event));
+        } catch (Exception e) {
+            // runTask throws if the plugin is disabled mid-flight (/reload, shutdown).
+            SkHttp.LOGGER.warn("Dropped websocket event " + event.getEventName() + " (is the plugin being disabled?): " + e.getMessage());
+        }
     }
 
     private static String decode(ByteBuffer buffer) {

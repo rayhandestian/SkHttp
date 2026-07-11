@@ -22,6 +22,13 @@ Versions 1.5 and older support Skript 2.7+ on Java 17 and remain available from 
 - **Discord webhooks**: build embeds and send webhook messages
 - **JSON**: create, read and edit JSON values (for heavy JSON work, consider the excellent [skJson](https://github.com/cooffeeRequired/skJson))
 
+## Behavior changes in 1.6.0
+
+- Endpoint triggers now run on the main server thread (Bukkit API is safe to use inside them). Request bodies are read before the trigger runs, so remote clients can no longer stall the server.
+- `send request` (the sync form) no longer blocks the thread: the trigger pauses and resumes when the response arrives, like Skript's `wait`. Code after the effect still sees the response, and requests to the server's own endpoints now work instead of freezing the server.
+- When a request fails, the section body still runs but `the response` and `last http response` are not set (previously `last http response` kept a stale response from an earlier request). Check `if last http response is set` to detect failures.
+- `... has key/value` on an empty json list is now false instead of true.
+
 ## Example
 
 ```applescript

@@ -12,13 +12,17 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HttpExchange {
+    // Response I/O runs off-thread: respond() is called from the main thread, and a slow client must not be able to stall the game loop.
+    private static final ExecutorService RESPONSE_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+
     public HttpExchange(com.sun.net.httpserver.HttpExchange exchange, String path) {
         this.exchange = exchange;
         this.path = path;
-        SkHttp.LAST_EXCHANGE = this;
     }
 
     private final String path;
@@ -53,23 +57,26 @@ public class HttpExchange {
             SkHttp.LOGGER.warn("A response was already sent for " + method() + " " + uri() + ", ignoring.");
             return;
         }
-        try {
-            if (string == null){
-                exchange.sendResponseHeaders(responseCode, -1);
-            } else {
-                byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
-                exchange.sendResponseHeaders(responseCode, bytes.length);
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(bytes);
+        responseBody = string;
+        String body = string;
+        RESPONSE_EXECUTOR.execute(() -> {
+            try {
+                if (body == null){
+                    exchange.sendResponseHeaders(responseCode, -1);
+                } else {
+                    byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(responseCode, bytes.length);
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(bytes);
+                    }
                 }
-                responseBody = string;
+            } catch (IOException e) {
+                // The client aborted the connection before the response was written (browser refresh spam, timeouts). Not recoverable and not a script error, so don't throw.
+                SkHttp.LOGGER.debug("Client disconnected before the response could be sent for " + method() + " " + uri());
+            } finally {
+                exchange.close();
             }
-        } catch (IOException e) {
-            // The client aborted the connection before the response was written (browser refresh spam, timeouts). Not recoverable and not a script error, so don't throw.
-            SkHttp.LOGGER.debug("Client disconnected before the response could be sent for " + method() + " " + uri());
-        } finally {
-            exchange.close();
-        }
+        });
     }
 
     public boolean hasResponded(){
@@ -106,6 +113,7 @@ public class HttpExchange {
             try {
                 requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             } catch (IOException e) {
+                SkHttp.LOGGER.debug("Could not read the request body for " + method() + " " + uri() + ": " + e.getMessage());
                 requestBody = "";
             }
         }

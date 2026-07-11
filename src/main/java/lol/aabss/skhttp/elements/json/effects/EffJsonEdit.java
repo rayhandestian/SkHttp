@@ -94,6 +94,8 @@ public class EffJsonEdit extends Effect {
                 if (index == null){
                     return;
                 }
+                // Keep the same index convention as the json getter expression.
+                index = index-(SkHttp.instance.getConfig().getBoolean("use-skript-index", false) ? 1 : 0);
                 new Json(element, e).removeIndex(index);
             }
         }

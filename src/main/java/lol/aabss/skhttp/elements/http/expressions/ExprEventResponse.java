@@ -35,9 +35,13 @@ public class ExprEventResponse extends SimpleExpression<HttpResponse> {
     @Override
     protected HttpResponse @NotNull [] get(@NotNull Event e) {
         if (e instanceof EffSecSendHttpRequest.SendHttpRequestEvent) {
-            return new HttpResponse[]{((EffSecSendHttpRequest.SendHttpRequestEvent) e).getResponse()};
+            HttpResponse<?> response = ((EffSecSendHttpRequest.SendHttpRequestEvent) e).getResponse();
+            // The response is null when the request failed; the expression is then simply not set.
+            if (response != null) {
+                return new HttpResponse[]{response};
+            }
         }
-        return null;
+        return new HttpResponse[0];
     }
 
     @Override

@@ -114,12 +114,20 @@ public class SecCreateEndpoint extends Section {
         Consumer<HttpExchange> consumer;
         if (trigger != null) {
             // The JDK http server invokes this on its own dispatcher thread; Skript triggers and most Bukkit API are only safe on the main thread. The exchange stays open until the trigger responds.
-            consumer = o -> Bukkit.getScheduler().runTask(SkHttp.instance, () -> {
-                SkHttp.LAST_EXCHANGE = o;
-                CreateEndpointEvent endpoint = new CreateEndpointEvent(o);
-                Variables.setLocalVariables(endpoint, Variables.copyLocalVariables(event));
-                trigger.execute(endpoint);
-            });
+            consumer = o -> {
+                try {
+                    Bukkit.getScheduler().runTask(SkHttp.instance, () -> {
+                        SkHttp.LAST_EXCHANGE = o;
+                        CreateEndpointEvent endpoint = new CreateEndpointEvent(o);
+                        Variables.setLocalVariables(endpoint, Variables.copyLocalVariables(event));
+                        trigger.execute(endpoint);
+                    });
+                } catch (Exception e) {
+                    // runTask throws if the plugin is disabled mid-flight (/reload, shutdown); close so the client is not left hanging.
+                    SkHttp.LOGGER.warn("Dropped an incoming request to " + o.path() + " (is the plugin being disabled?): " + e.getMessage());
+                    o.close();
+                }
+            };
         } else {
             consumer = null;
         }

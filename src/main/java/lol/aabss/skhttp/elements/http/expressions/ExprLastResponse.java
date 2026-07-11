@@ -34,6 +34,9 @@ public class ExprLastResponse extends SimpleExpression<HttpResponse> {
 
     @Override
     protected HttpResponse<?> @NotNull [] get(@NotNull Event e) {
+        if (LAST_RESPONSE == null) {
+            return new HttpResponse[0];
+        }
         return new HttpResponse[]{LAST_RESPONSE};
     }
 

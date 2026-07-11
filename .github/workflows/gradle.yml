@@ -5,18 +5,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
       - name: Build
         run: ./gradlew shadowJar
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: SkHttp
           path: build/libs/**
@@ -26,14 +26,14 @@ jobs:
     needs: [build]
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: extra-plugins/
           merge-multiple: true
       - name: Run tests
-        uses: SkriptLang/skript-test-action@v1.3
+        uses: SkriptLang/skript-test-action@b841785ae4718b6a214b241fe2a9a1f59a76b654 # v1.3
         with:
           test_script_directory: src/test/scripts
           skript_repo_ref: 2.15.4

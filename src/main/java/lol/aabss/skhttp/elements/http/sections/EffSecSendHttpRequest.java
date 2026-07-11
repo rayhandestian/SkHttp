@@ -6,6 +6,7 @@ import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Getter;
@@ -19,7 +20,6 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.util.List;
@@ -73,6 +73,8 @@ public class EffSecSendHttpRequest extends EffectSection {
         }
     }
 
+    private static final HttpClient DEFAULT_CLIENT = HttpClient.newHttpClient();
+
     @Nullable
     private Trigger trigger;
     @Nullable
@@ -89,65 +91,94 @@ public class EffSecSendHttpRequest extends EffectSection {
         client = (Expression<HttpClient>) exprs[0];
         request = (Expression<RequestObject>) exprs[1];
         async = parseResult.hasTag("a");
+        // The sync form resumes the trigger when the response arrives instead of blocking the thread, which is a delay in Skript's model.
+        if (!async) {
+            getParser().setHasDelayBefore(Kleenean.TRUE);
+        }
         return true;
     }
 
-    private static final HttpClient DEFAULT_CLIENT = HttpClient.newHttpClient();
-
     @Override
     protected @Nullable TriggerItem walk(@NotNull Event event) {
+        debug(event, true);
         RequestObject request = this.request.getSingle(event);
         if (request == null){
-            return null;
+            SkHttp.LOGGER.warn("Cannot send http request: the request is not set.");
+            return super.walk(event, false);
         }
-        if (client != null) {
-            call(event, request, this.client.getSingle(event));
-        } else {
-            call(event, request, null);
+        HttpClient httpClient = null;
+        if (this.client != null) {
+            httpClient = this.client.getSingle(event);
         }
-        return super.walk(event, false);
+        if (httpClient == null) {
+            httpClient = DEFAULT_CLIENT;
+        }
+        if (async) {
+            sendAsync(event, request, httpClient);
+            return super.walk(event, false);
+        }
+        sendSyncContinuation(event, request, httpClient);
+        return null;
     }
 
-    private void call(@NotNull Event event, RequestObject request, HttpClient client) {
-        HttpClient httpClient = client != null ? client : DEFAULT_CLIENT;
-        if (async) {
-            // Copy before the request: the source trigger finishes (and clears its locals) long before the response arrives.
-            Object variables = Variables.copyLocalVariables(event);
-            httpClient.sendAsync(request.request, HttpResponse.BodyHandlers.ofString())
-                    .whenComplete((response, throwable) -> Bukkit.getScheduler().runTask(SkHttp.instance, () -> {
-                        if (throwable != null) {
-                            SkHttp.LOGGER.warn("Async http request failed: " + throwable.getMessage());
-                            return;
-                        }
+    private void sendAsync(@NotNull Event event, RequestObject request, HttpClient httpClient) {
+        Object localVars = Variables.copyLocalVariables(event);
+        httpClient.sendAsync(request.request, HttpResponse.BodyHandlers.ofString())
+                .whenComplete((response, throwable) -> {
+                    if (throwable != null) {
+                        SkHttp.LOGGER.warn("Async http request failed: " + throwable.getMessage());
+                    }
+                    // On failure the section still runs with no response, matching 1.5, so scripts can detect it.
+                    runOnMainThread(() -> {
                         SkHttp.LAST_RESPONSE = response;
                         if (trigger != null) {
                             SendHttpRequestEvent requestEvent = new SendHttpRequestEvent(response);
-                            if (variables != null) {
-                                Variables.setLocalVariables(requestEvent, variables);
-                            }
-                            trigger.execute(requestEvent);
+                            Variables.setLocalVariables(requestEvent, localVars);
+                            TriggerItem.walk(trigger, requestEvent);
+                            Variables.removeLocals(requestEvent);
                         }
-                    }));
-        } else {
-            HttpResponse<?> response;
-            try {
-                response = httpClient.send(request.request, HttpResponse.BodyHandlers.ofString());
-            } catch (IOException e) {
-                SkHttp.LOGGER.warn("Http request failed: " + e.getMessage());
-                return;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
-            }
-            SkHttp.LAST_RESPONSE = response;
-            if (trigger != null) {
-                SendHttpRequestEvent requestEvent = new SendHttpRequestEvent(response);
-                Object variables = Variables.copyLocalVariables(event);
-                if (variables != null) {
-                    Variables.setLocalVariables(requestEvent, variables);
-                }
-                trigger.execute(requestEvent);
-            }
+                    });
+                });
+    }
+
+    private void sendSyncContinuation(@NotNull Event event, RequestObject request, HttpClient httpClient) {
+        TriggerItem next = getNext();
+        // The trigger is resumed Delay-style when the response arrives; blocking here would freeze the main thread and deadlock requests sent to this server's own endpoints.
+        Object localVars = Variables.removeLocals(event);
+        httpClient.sendAsync(request.request, HttpResponse.BodyHandlers.ofString())
+                .whenComplete((response, throwable) -> {
+                    if (throwable != null) {
+                        SkHttp.LOGGER.warn("Http request failed: " + throwable.getMessage());
+                    }
+                    runOnMainThread(() -> {
+                        Delay.addDelayedEvent(event);
+                        SkHttp.LAST_RESPONSE = response;
+                        Object vars = localVars;
+                        if (trigger != null) {
+                            SendHttpRequestEvent requestEvent = new SendHttpRequestEvent(response);
+                            // The outer trigger's variable map is shared, not copied, so variables set inside the section stay visible after it.
+                            Variables.setLocalVariables(requestEvent, vars);
+                            TriggerItem.walk(trigger, requestEvent);
+                            Object harvested = Variables.removeLocals(requestEvent);
+                            if (harvested != null) {
+                                vars = harvested;
+                            }
+                        }
+                        if (next != null) {
+                            Variables.setLocalVariables(event, vars);
+                            TriggerItem.walk(next, event);
+                            Variables.removeLocals(event);
+                        }
+                    });
+                });
+    }
+
+    // Exceptions must be caught here: whenComplete swallows anything thrown into its unobserved stage, and runTask throws if the plugin is disabled mid-flight (/reload, shutdown).
+    private static void runOnMainThread(Runnable task) {
+        try {
+            Bukkit.getScheduler().runTask(SkHttp.instance, task);
+        } catch (Exception e) {
+            SkHttp.LOGGER.warn("Dropped http response handling (is the plugin being disabled?): " + e.getMessage());
         }
     }
 
