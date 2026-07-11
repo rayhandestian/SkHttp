@@ -13,6 +13,7 @@ import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import lol.aabss.skhttp.SkHttp;
 import lol.aabss.skhttp.objects.RequestObject;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -91,49 +92,61 @@ public class EffSecSendHttpRequest extends EffectSection {
         return true;
     }
 
+    private static final HttpClient DEFAULT_CLIENT = HttpClient.newHttpClient();
+
     @Override
     protected @Nullable TriggerItem walk(@NotNull Event event) {
         RequestObject request = this.request.getSingle(event);
         if (request == null){
             return null;
         }
-        try {
-            if (client != null) {
-                call(event, request, this.client.getSingle(event));
-            } else {
-                call(event, request, null);
-            }
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+        if (client != null) {
+            call(event, request, this.client.getSingle(event));
+        } else {
+            call(event, request, null);
         }
         return super.walk(event, false);
     }
 
-    private void call(@NotNull Event event, RequestObject request, HttpClient client) throws IOException, InterruptedException {
-        HttpClient httpClient = HttpClient.newHttpClient();
-        if (client != null){
-            httpClient = client;
-        }
+    private void call(@NotNull Event event, RequestObject request, HttpClient client) {
+        HttpClient httpClient = client != null ? client : DEFAULT_CLIENT;
         if (async) {
+            // Copy before the request: the source trigger finishes (and clears its locals) long before the response arrives.
+            Object variables = Variables.copyLocalVariables(event);
             httpClient.sendAsync(request.request, HttpResponse.BodyHandlers.ofString())
-                    .whenCompleteAsync((stringHttpResponse, throwable) -> {
-                        SkHttp.LAST_RESPONSE = stringHttpResponse;
-                        if (trigger != null) {
-                            Object variables = Variables.copyLocalVariables(event);
-                            if (variables != null) {
-                                Variables.setLocalVariables(event, variables);
-                            }
-                            trigger.execute(event);
+                    .whenComplete((response, throwable) -> Bukkit.getScheduler().runTask(SkHttp.instance, () -> {
+                        if (throwable != null) {
+                            SkHttp.LOGGER.warn("Async http request failed: " + throwable.getMessage());
+                            return;
                         }
-                    });
+                        SkHttp.LAST_RESPONSE = response;
+                        if (trigger != null) {
+                            SendHttpRequestEvent requestEvent = new SendHttpRequestEvent(response);
+                            if (variables != null) {
+                                Variables.setLocalVariables(requestEvent, variables);
+                            }
+                            trigger.execute(requestEvent);
+                        }
+                    }));
         } else {
-            SkHttp.LAST_RESPONSE = httpClient.send(request.request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<?> response;
+            try {
+                response = httpClient.send(request.request, HttpResponse.BodyHandlers.ofString());
+            } catch (IOException e) {
+                SkHttp.LOGGER.warn("Http request failed: " + e.getMessage());
+                return;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            SkHttp.LAST_RESPONSE = response;
             if (trigger != null) {
+                SendHttpRequestEvent requestEvent = new SendHttpRequestEvent(response);
                 Object variables = Variables.copyLocalVariables(event);
                 if (variables != null) {
-                    Variables.setLocalVariables(event, variables);
+                    Variables.setLocalVariables(requestEvent, variables);
                 }
-                trigger.execute(event);
+                trigger.execute(requestEvent);
             }
         }
     }
