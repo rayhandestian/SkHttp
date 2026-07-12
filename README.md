@@ -28,6 +28,8 @@ Versions 1.5 and older support Skript 2.7+ on Java 17 and remain available from 
 - `send request` (the sync form) no longer blocks the thread: the trigger pauses and resumes when the response arrives, like Skript's `wait`. Code after the effect still sees the response, and requests to the server's own endpoints now work instead of freezing the server.
 - When a request fails, the section body still runs but `the response` and `last http response` are not set (previously `last http response` kept a stale response from an earlier request). Check `if last http response is set` to detect failures.
 - `... has key/value` on an empty json list is now false instead of true.
+- (1.6.1) `send text message`/`send binary message` now send a complete message; use `send partial text message` for a fragment.
+- (1.6.1) `https server` no longer parses (it silently served plaintext). Use `http server`.
 
 ## Example
 
