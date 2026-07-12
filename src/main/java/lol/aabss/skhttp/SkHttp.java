@@ -40,15 +40,16 @@ public final class SkHttp extends JavaPlugin {
         if (Bukkit.getPluginManager().getPlugin("Skript") != null) {
             instance = this;
             saveDefaultConfig();
+            // Bail out before any other startup work (metrics, commands, class loading) if Skript is too old.
+            if (!Skript.classExists("org.skriptlang.skript.bukkit.lang.eventvalue.EventValueRegistry")) {
+                LOGGER.error("SkHttp 2.0 requires Skript 2.15 or newer. Please update Skript (or use SkHttp 1.6.x on older Skript).");
+                getPluginLoader().disablePlugin(this);
+                return;
+            }
             Metrics metrics = new Metrics(this, 21279);
             try {
                 getCommand("skhttp").setExecutor(this);
                 getCommand("skhttp").setTabCompleter(this);
-                if (!Skript.classExists("org.skriptlang.skript.bukkit.lang.eventvalue.EventValueRegistry")) {
-                    LOGGER.error("SkHttp 2.0 requires Skript 2.15 or newer. Please update Skript (or use SkHttp 1.6.x on older Skript).");
-                    getPluginLoader().disablePlugin(this);
-                    return;
-                }
                 SkriptAddon addon = Skript.instance().registerAddon(SkHttp.class, "SkHttp");
                 SkHttpRegistry.init(addon);
                 addon.localizer().setSourceDirectories("lang", getDataFolder().getAbsolutePath() + "/lang");
