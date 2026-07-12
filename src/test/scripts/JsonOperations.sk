@@ -1,0 +1,20 @@
+test "json create, edit and query":
+	# build from a string literal
+	set {_json} to json from string "{""name"": ""skhttp"", ""num"": 5}"
+	assert {_json} is set with "failed to parse json from string"
+	assert key "name" of {_json} = "skhttp" with "failed to read a string key"
+	assert {_json} has key "num" with "has key returned false for a present key"
+
+	# add then read back a value
+	add key "extra" and value 42 in {_json}
+	assert key "extra" of {_json} = 42 with "failed to add and read a key"
+
+	# arrays and remove-all with duplicate values (regression: identity match / concurrent modification)
+	set {_arr} to json from string "[1, 2, 1, 3, 1]"
+	remove all 1 in {_arr}
+	assert index 0 of {_arr} = 2 with "remove all left the wrong first element"
+	assert index 1 of {_arr} = 3 with "remove all left the wrong second element"
+
+	# indexing (default config is 0-based)
+	set {_first} to index 0 of {_arr}
+	assert {_first} = 2 with "index 0 did not return the first element"

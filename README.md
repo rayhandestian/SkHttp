@@ -51,3 +51,7 @@ on script load:
 ```
 
 The jar is written to `build/libs/`. Java 21+ is required to build.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
