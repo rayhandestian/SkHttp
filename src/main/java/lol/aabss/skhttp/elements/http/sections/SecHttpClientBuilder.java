@@ -12,6 +12,8 @@ import ch.njol.skript.lang.*;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
+import lol.aabss.skhttp.SkHttp;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +24,7 @@ import org.skriptlang.skript.lang.entry.util.ExpressionEntryData;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Name("HTTP Client Builder")
@@ -68,12 +71,15 @@ public class SecHttpClientBuilder extends Section {
         this.followRedirects = (Expression<String>) ENTRY_CONTAINER.getOptional("follow redirects", false);
         this.priority = (Expression<Integer>) ENTRY_CONTAINER.getOptional("priority", false);
         this.version = (Expression<Integer>) ENTRY_CONTAINER.getOptional("version", false);
-        AtomicBoolean delayed = new AtomicBoolean(false);
-        Runnable afterLoading = () -> delayed.set(!getParser().getHasDelayBefore().isFalse());
-        executor = loadCode(getTriggerNode(sectionNode), "http client builder", afterLoading);
-        if (delayed.get()) {
-            Skript.error("Delays can't be used within a Http Client Section");
-            return false;
+        SectionNode executorNode = getTriggerNode(sectionNode);
+        if (executorNode != null) {
+            AtomicBoolean delayed = new AtomicBoolean(false);
+            Runnable afterLoading = () -> delayed.set(!getParser().getHasDelayBefore().isFalse());
+            executor = loadCode(executorNode, "http client builder", afterLoading);
+            if (delayed.get()) {
+                Skript.error("Delays can't be used within a Http Client Section");
+                return false;
+            }
         }
         if (exprs[0] instanceof Variable<?>){
             this.var = (Variable<?>) exprs[0];
@@ -98,9 +104,18 @@ public class SecHttpClientBuilder extends Section {
     protected @Nullable TriggerItem walk(@NotNull Event event) {
         Runnable runnable;
         if (executor != null) {
+            // The executor code runs on the HttpClient's worker thread; Skript triggers are only safe on the main thread.
+            Object localVars = Variables.copyLocalVariables(event);
             runnable = () -> {
-                Variables.setLocalVariables(event, Variables.copyLocalVariables(event));
-                executor.execute(event);
+                try {
+                    Bukkit.getScheduler().runTask(SkHttp.instance, () -> {
+                        Variables.setLocalVariables(event, localVars);
+                        executor.execute(event);
+                    });
+                } catch (Exception e) {
+                    // runTask throws if the plugin is disabled mid-flight.
+                    SkHttp.LOGGER.warn("Dropped http client executor code (is the plugin being disabled?): " + e.getMessage());
+                }
             };
         } else {
             runnable = null;
@@ -122,10 +137,10 @@ public class SecHttpClientBuilder extends Section {
             if (followRedirects == null) {
                 followRedirects = "normal";
             }
-            switch (followRedirects) {
-                case "always": builder.followRedirects(HttpClient.Redirect.ALWAYS);
-                case "never": builder.followRedirects(HttpClient.Redirect.NEVER);
-                default: builder.followRedirects(HttpClient.Redirect.NORMAL);
+            switch (followRedirects.toLowerCase(Locale.ROOT)) {
+                case "always" -> builder.followRedirects(HttpClient.Redirect.ALWAYS);
+                case "never" -> builder.followRedirects(HttpClient.Redirect.NEVER);
+                default -> builder.followRedirects(HttpClient.Redirect.NORMAL);
             }
         }
         if (priority != null) {
@@ -134,7 +149,7 @@ public class SecHttpClientBuilder extends Section {
                 builder.priority(priority > 256 ? 256 : (priority < 1 ? 1 : priority));
             }
         }
-        if (priority != null) {
+        if (version != null) {
             Integer version = this.version.getSingle(event);
             if (version != null) {
                 builder.version(version == 1 ? HttpClient.Version.HTTP_1_1 : HttpClient.Version.HTTP_2);

@@ -104,7 +104,7 @@ public final class SkHttp extends JavaPlugin {
             sender.sendMessage(ChatColor.RED + "/skhttp reload");
         } else {
             if (args[0].equalsIgnoreCase("reload")){
-                saveConfig();
+                // Only re-read from disk; saving first would overwrite the user's manual edits with the stale in-memory config.
                 reloadConfig();
                 sender.sendMessage(ChatColor.GREEN + "Reloaded!");
             } else {

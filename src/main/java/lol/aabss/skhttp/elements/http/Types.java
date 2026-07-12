@@ -63,7 +63,7 @@ public class Types {
         Classes.registerClass(new ClassInfo<>(HttpResponse.class, "httpresponse")
                 .name("Http Response")
                 .description("Represents an http response.")
-                .user("http ?requests?")
+                .user("http ?responses?")
                 .since("1.0")
                 .parser(new Parser<>() {
 

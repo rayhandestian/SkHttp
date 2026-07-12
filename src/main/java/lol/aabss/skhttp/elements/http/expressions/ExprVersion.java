@@ -37,7 +37,9 @@ public class ExprVersion extends PropertyExpression<Object, String> {
             if (response instanceof HttpResponse<?>) {
                 versions.add(((HttpResponse<?>) response).version().name().toLowerCase());
             } else if (response instanceof RequestObject){
-                versions.add(((RequestObject) response).request.version().get().name().toLowerCase());
+                // The request version is optional; only add it when explicitly set.
+                ((RequestObject) response).request.version()
+                        .ifPresent(v -> versions.add(v.name().toLowerCase()));
             } else if (response instanceof HttpClient){
                 versions.add(((HttpClient) response).version().name().toLowerCase());
             }

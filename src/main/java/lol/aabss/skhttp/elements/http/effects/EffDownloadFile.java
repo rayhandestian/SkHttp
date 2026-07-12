@@ -12,6 +12,7 @@ import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.util.AsyncEffect;
 import ch.njol.skript.util.LiteralUtils;
 import ch.njol.util.Kleenean;
+import lol.aabss.skhttp.SkHttp;
 import lol.aabss.skhttp.objects.RequestObject;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
@@ -65,11 +66,13 @@ public class EffDownloadFile extends AsyncEffect {
                 } else {
                     return;
                 }
-                ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-                FileOutputStream fos = new FileOutputStream(path);
-                fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+                // try-with-resources so the channel and stream are closed even on failure.
+                try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                     FileOutputStream fos = new FileOutputStream(path)) {
+                    fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+                }
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                SkHttp.LOGGER.warn("Failed to download file to " + path + ": " + ex.getMessage());
             }
         }
     }

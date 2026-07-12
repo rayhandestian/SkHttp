@@ -33,7 +33,8 @@ public class ExprPreviousResponse extends PropertyExpression<HttpResponse<String
     protected HttpResponse<?> @NotNull [] get(@NotNull Event event, HttpResponse<String> @NotNull [] source) {
         List<HttpResponse<?>> responses = new ArrayList<>();
         for (HttpResponse<?> response : source){
-            responses.add(response.previousResponse().get());
+            // Only redirected responses have a previous response.
+            response.previousResponse().ifPresent(responses::add);
         }
         return responses.toArray(HttpResponse<?>[]::new);
     }

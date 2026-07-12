@@ -134,7 +134,8 @@ public class SecRequestBuilder extends Section {
             boolean isLocal = variableName.contains("_");
             Object variableValue = Variables.getVariable(variableName, event, isLocal);
             String replacement = Classes.toString(variableValue);
-            matcher.appendReplacement(result, replacement);
+            // Quote the replacement so $ and \ in variable values are treated literally, not as group references.
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(result);
         return result.toString();

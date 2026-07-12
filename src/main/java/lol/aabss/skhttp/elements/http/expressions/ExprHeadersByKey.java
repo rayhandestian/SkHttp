@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 @Name("HTTP Header By Key")
 @Description("Gets a header by it's key.")
@@ -34,8 +35,6 @@ public class ExprHeadersByKey extends SimpleExpression<String> {
         );
     }
 
-    private boolean request;
-
     private Expression<Object> object;
     private Expression<String> key;
     @Override
@@ -48,17 +47,20 @@ public class ExprHeadersByKey extends SimpleExpression<String> {
         if (key == null){
             return new String[]{};
         }
+        List<String> values = null;
         if (obj instanceof HttpResponse<?>){
-            return ((HttpResponse<?>) obj).headers().map().get(key).toArray(String[]::new);
+            values = ((HttpResponse<?>) obj).headers().map().get(key);
         } else if (obj instanceof HttpRequest){
-            return ((HttpRequest) obj).headers().map().get(key).toArray(String[]::new);
-        } else if (object instanceof HttpExchange){
-            if (request) {
-                return ((HttpExchange) object).requestHeaders().get(key).toArray(String[]::new);
-            }
-            return ((HttpExchange) object).responseHeaders().get(key).toArray(String[]::new);
+            values = ((HttpRequest) obj).headers().map().get(key);
+        } else if (obj instanceof HttpExchange){
+            // The exchange carries the incoming request headers, which is what a server handler reads by key.
+            values = ((HttpExchange) obj).requestHeaders().get(key);
         }
-        return new String[]{};
+        // The header may be absent, in which case the map returns null.
+        if (values == null){
+            return new String[]{};
+        }
+        return values.toArray(String[]::new);
     }
 
     @Override
@@ -80,7 +82,6 @@ public class ExprHeadersByKey extends SimpleExpression<String> {
     public boolean init(Expression<?> @NotNull [] exprs, int matchedPattern, @NotNull Kleenean isDelayed, SkriptParser.@NotNull ParseResult parseResult) {
         object = (Expression<Object>) exprs[0];
         key = (Expression<String>) exprs[1];
-        request = parseResult.hasTag("request");
         if (this.object instanceof UnparsedLiteral) {
             object = LiteralUtils.defendExpression(object);
         }

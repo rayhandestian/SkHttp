@@ -57,7 +57,7 @@ public class Types {
 
                             @Override
                             public @NotNull String toVariableNameString(Embed o) {
-                                return o.getTitle();
+                                return o.getTitle() == null ? "discord embed" : o.getTitle();
                             }
                         }
                 )
@@ -82,7 +82,7 @@ public class Types {
 
                             @Override
                             public @NotNull String toVariableNameString(Footer o) {
-                                return o.getText();
+                                return o.getText() == null ? "discord footer" : o.getText();
                             }
                         }
                 )
@@ -107,7 +107,7 @@ public class Types {
 
                             @Override
                             public @NotNull String toVariableNameString(Author o) {
-                                return o.getName();
+                                return o.getName() == null ? "discord author" : o.getName();
                             }
                         }
                 )
@@ -132,7 +132,7 @@ public class Types {
 
                             @Override
                             public @NotNull String toVariableNameString(Field o) {
-                                return o.getName();
+                                return o.getName() == null ? "discord field" : o.getName();
                             }
                         }
                 )

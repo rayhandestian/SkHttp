@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 @Name("Websocket Send Status")
 @Description("Sends a websocket status.")
@@ -32,16 +33,17 @@ public class EffWebsocketSendStatus extends AsyncEffect {
     static {
         Skript.registerEffect(EffWebsocketSendStatus.class,
                 "(send|post) close with status code %integer% and reason %string% (with|by|using) [websocket] %websockets%",
-                "(send|post) [:last] binary message %string% (with|by|using) [websocket] %websockets%",
+                "(send|post) [last|:partial] binary message %string% (with|by|using) [websocket] %websockets%",
                 "(send|post) ping message %string% (with|by|using) [websocket] %websockets%",
                 "(send|post) pong message %string% (with|by|using) [websocket] %websockets%",
-                "(send|post) [:last] (text|message) %string% (with|by|using) [websocket] %websockets%"
+                "(send|post) [last|:partial] (text|message) %string% (with|by|using) [websocket] %websockets%"
         );
     }
 
     private Expression<WebSocket> webSocket;
     private Expression<Integer> code;
     private Expression<String> message;
+    // A websocket message is complete unless the script explicitly marks it as a partial fragment.
     private boolean last;
     private int pattern;
 
@@ -59,11 +61,11 @@ public class EffWebsocketSendStatus extends AsyncEffect {
                 }
                 webSocket.sendClose(code, message);
             } else if (pattern == 1) {
-                webSocket.sendBinary(ByteBuffer.wrap(message.getBytes()), last);
+                webSocket.sendBinary(ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8)), last);
             } else if (pattern == 2) {
-                webSocket.sendPing(ByteBuffer.wrap(message.getBytes()));
+                webSocket.sendPing(ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8)));
             } else if (pattern == 3) {
-                webSocket.sendPong(ByteBuffer.wrap(message.getBytes()));
+                webSocket.sendPong(ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8)));
             } else if (pattern == 4) {
                 webSocket.sendText(message, last);
             }
@@ -78,7 +80,7 @@ public class EffWebsocketSendStatus extends AsyncEffect {
     @Override
     public boolean init(Expression<?> @NotNull [] exprs, int matchedPattern, @NotNull Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         pattern = matchedPattern;
-        last = parseResult.hasTag("last");
+        last = !parseResult.hasTag("partial");
         if (matchedPattern == 0){
             code = (Expression<Integer>) exprs[0];
             message = (Expression<String>) exprs[1];

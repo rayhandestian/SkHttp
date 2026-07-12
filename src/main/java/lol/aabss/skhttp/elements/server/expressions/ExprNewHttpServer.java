@@ -29,8 +29,9 @@ import java.util.Random;
 public class ExprNewHttpServer extends SimpleExpression<HttpServer> {
 
     static {
+        // Note: https is intentionally not accepted; the HttpsServer path built a self-signed server and silently served plaintext otherwise. Real TLS support can be added later.
         Skript.registerExpression(ExprNewHttpServer.class, HttpServer.class, ExpressionType.COMBINED,
-                "[a] [new] http[s] server [with port %-integer%]"
+                "[a] [new] http server [with port %-integer%]"
         );
     }
 
@@ -48,7 +49,8 @@ public class ExprNewHttpServer extends SimpleExpression<HttpServer> {
         if (defaultPort != -1) {
             return server(defaultPort);
         }
-        return server(new Random().nextInt(1024, 99999));
+        // Upper bound is exclusive and TCP ports end at 65535.
+        return server(new Random().nextInt(1024, 65536));
     }
 
     private HttpServer[] server(int port){

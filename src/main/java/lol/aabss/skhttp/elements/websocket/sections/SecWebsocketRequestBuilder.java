@@ -13,7 +13,9 @@ import ch.njol.skript.lang.*;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
+import lol.aabss.skhttp.SkHttp;
 import lol.aabss.skhttp.objects.websocket.WebsocketBukkitListener;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +48,7 @@ public class SecWebsocketRequestBuilder extends EffectSection {
 
     private static final EntryValidator.EntryValidatorBuilder ENTRY_VALIDATOR = EntryValidator.builder();
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{(.*?)}");
-    private static EntryContainer ENTRY_CONTAINER;
+    private EntryContainer entryContainer;
     private final HashMap<String, String> headers = new HashMap<>();
     private Expression<String> url;
     private Variable<?> var;
@@ -83,7 +85,8 @@ public class SecWebsocketRequestBuilder extends EffectSection {
             boolean isLocal = variableName.contains("_");
             Object variableValue = Variables.getVariable(variableName, event, isLocal);
             String replacement = Classes.toString(variableValue);
-            matcher.appendReplacement(result, replacement);
+            // Quote the replacement so $ and \ in variable values are treated literally, not as group references.
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(result);
         return result.toString();
@@ -92,8 +95,8 @@ public class SecWebsocketRequestBuilder extends EffectSection {
     @Override
     public boolean init(Expression<?> @NotNull [] exprs, int matchedPattern, @NotNull Kleenean isDelayed, SkriptParser.@NotNull ParseResult parseResult, @Nullable SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
         if (sectionNode != null) {
-            ENTRY_CONTAINER = ENTRY_VALIDATOR.build().validate(sectionNode);
-            if (ENTRY_CONTAINER == null) return false;
+            entryContainer = ENTRY_VALIDATOR.build().validate(sectionNode);
+            if (entryContainer == null) return false;
         }
         this.url = (Expression<String>) exprs[0];
         if (this.url == null) return false;
@@ -108,33 +111,52 @@ public class SecWebsocketRequestBuilder extends EffectSection {
 
     @Override
     protected @Nullable TriggerItem walk(@NotNull Event e) {
-        ENTRY_CONTAINER.getSource().convertToEntries(-1, ":");
-        loadHeaders(ENTRY_CONTAINER.getSource(), e);
+        headers.clear();
+        // The headers section is optional, so there may be no entry container to read.
+        if (entryContainer != null) {
+            entryContainer.getSource().convertToEntries(-1, ":");
+            loadHeaders(entryContainer.getSource(), e);
+        }
         execute(e);
         return super.walk(e, false);
     }
 
     public void execute(Event e){
         String url = this.url.getSingle(e);
-        if (this.url == null){
-            return;
-        }
         if (url == null){
             return;
         }
         Variable<?> var = this.var;
-        if (this.var == null){
+        if (var == null){
+            return;
+        }
+        URI uri;
+        try {
+            uri = URI.create(url);
+        } catch (IllegalArgumentException ex) {
+            SkHttp.LOGGER.warn("Invalid websocket url: " + url);
             return;
         }
         WebSocket.Builder builder = HttpClient.newHttpClient().newWebSocketBuilder();
-        if (headers != null) {
-            for (String key : headers.keySet()) {
-                builder = builder.header(key, headers.get(key));
-            }
+        for (String key : headers.keySet()) {
+            builder = builder.header(key, headers.get(key));
         }
-        builder.buildAsync(URI.create(url), new WebsocketBukkitListener()).whenCompleteAsync((webSocket, throwable) ->
-                var.change(e, new Object[]{webSocket}, Changer.ChangeMode.SET)
-        );
+        builder.buildAsync(uri, new WebsocketBukkitListener()).whenComplete((webSocket, throwable) -> {
+            if (throwable != null || webSocket == null) {
+                SkHttp.LOGGER.warn("Failed to open websocket to " + url + ": "
+                        + (throwable != null ? throwable.getMessage() : "no socket"));
+                return;
+            }
+            // The callback runs on an HttpClient thread; the variable change and LAST_WEBSOCKET must happen on the main thread.
+            try {
+                Bukkit.getScheduler().runTask(SkHttp.instance, () -> {
+                    SkHttp.LAST_WEBSOCKET = webSocket;
+                    var.change(e, new Object[]{webSocket}, Changer.ChangeMode.SET);
+                });
+            } catch (Exception ex) {
+                SkHttp.LOGGER.warn("Dropped websocket open handling (is the plugin being disabled?): " + ex.getMessage());
+            }
+        });
     }
 
     @Override
