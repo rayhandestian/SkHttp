@@ -1,12 +1,11 @@
 package lol.aabss.skhttp.elements.server.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -30,7 +29,7 @@ public class ExprNewHttpServer extends SimpleExpression<HttpServer> {
 
     static {
         // Note: https is intentionally not accepted; the HttpsServer path built a self-signed server and silently served plaintext otherwise. Real TLS support can be added later.
-        Skript.registerExpression(ExprNewHttpServer.class, HttpServer.class, ExpressionType.COMBINED,
+        SkHttpRegistry.expression(ExprNewHttpServer.class, HttpServer.class, SkHttpRegistry.COMBINED,
                 "[a] [new] http server [with port %-integer%]"
         );
     }

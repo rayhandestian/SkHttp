@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.websocket.conditions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
 import ch.njol.skript.doc.Description;
@@ -21,7 +22,7 @@ import java.net.http.WebSocket;
 public class CondIsInputOutputClosed extends PropertyCondition<WebSocket> {
 
     static {
-        register(CondIsInputOutputClosed.class, "(output|:input) closed", "websockets");
+        SkHttpRegistry.propertyCondition(CondIsInputOutputClosed.class, "(output|:input) closed", "websockets");
     }
 
     private boolean input;

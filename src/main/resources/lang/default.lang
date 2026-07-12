@@ -9,7 +9,7 @@ types:
 
     httpclient: http client¦s @an
     httprequest: http request¦s @an
-    httpresponse: http resposne¦s @a
+    httpresponse: http response¦s @a
 
     httpcontext: http context¦s @a
     httpexchange: http exchange¦s @an

@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.sections;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
@@ -53,7 +54,7 @@ public class SecHttpClientBuilder extends Section {
     private Trigger executor;
 
     static {
-        Skript.registerSection(SecHttpClientBuilder.class,
+        SkHttpRegistry.section(SecHttpClientBuilder.class,
                 "http client [builder] stored in %object%"
         );
         ENTRY_VALIDATOR.addEntryData(new ExpressionEntryData<>("timeout", null, true, Timespan.class));
@@ -75,7 +76,7 @@ public class SecHttpClientBuilder extends Section {
         if (executorNode != null) {
             AtomicBoolean delayed = new AtomicBoolean(false);
             Runnable afterLoading = () -> delayed.set(!getParser().getHasDelayBefore().isFalse());
-            executor = loadCode(executorNode, "http client builder", afterLoading);
+            executor = loadCode(executorNode, "http client builder", null, afterLoading);
             if (delayed.get()) {
                 Skript.error("Delays can't be used within a Http Client Section");
                 return false;
@@ -129,7 +130,7 @@ public class SecHttpClientBuilder extends Section {
         if (timeout != null) {
             Timespan timeout = this.timeout.getSingle(event);
             if (timeout != null) {
-                builder.connectTimeout(Duration.ofMillis(timeout.getMilliSeconds()));
+                builder.connectTimeout(Duration.ofMillis(timeout.getAs(Timespan.TimePeriod.MILLISECOND)));
             }
         }
         if (followRedirects != null) {

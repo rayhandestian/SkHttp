@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -23,7 +24,7 @@ import java.net.http.HttpResponse;
 public class ExprBody extends SimplePropertyExpression<Object, String> {
 
     static {
-        register(ExprBody.class, String.class, "[:request|response] body", "httpresponses/httpexchanges");
+        SkHttpRegistry.property(ExprBody.class, String.class, "[:request|response] body", "httpresponses/httpexchanges");
     }
 
     private boolean request;

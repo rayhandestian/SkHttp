@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -29,7 +30,7 @@ public class EffCloseHttpClient extends Effect {
 
     static {
         if (Skript.methodExists(HttpClient.class, "shutdown")) {
-            Skript.registerEffect(EffCloseHttpClient.class,
+            SkHttpRegistry.effect(EffCloseHttpClient.class,
                     "(close|shutdown:shutdown [:now]) http[ ]client %httpclients%"
             );
         }

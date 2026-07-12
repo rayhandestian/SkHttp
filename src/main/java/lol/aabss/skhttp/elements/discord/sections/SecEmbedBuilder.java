@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.discord.sections;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
@@ -53,7 +54,7 @@ public class SecEmbedBuilder extends Section {
     private Variable<?> var;
 
     static {
-        Skript.registerSection(SecEmbedBuilder.class,
+        SkHttpRegistry.section(SecEmbedBuilder.class,
                 "discord [webhook] embed [builder]"
         );
         ENTRY_VALIDATOR.addEntryData(new ExpressionEntryData<>("title", null, true, String.class));

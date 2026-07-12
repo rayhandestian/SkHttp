@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -27,7 +28,7 @@ import java.util.List;
 public class ExprVersion extends PropertyExpression<Object, String> {
 
     static {
-        register(ExprVersion.class, String.class, "[repsonse|request] version", "httpresponses/httprequests/httpclients");
+        SkHttpRegistry.property(ExprVersion.class, String.class, "[response|request] version", "httpresponses/httprequests/httpclients");
     }
 
     @Override

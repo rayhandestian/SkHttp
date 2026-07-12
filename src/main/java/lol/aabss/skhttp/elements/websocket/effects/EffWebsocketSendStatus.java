@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.websocket.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -31,7 +31,7 @@ import java.nio.charset.StandardCharsets;
 public class EffWebsocketSendStatus extends AsyncEffect {
 
     static {
-        Skript.registerEffect(EffWebsocketSendStatus.class,
+        SkHttpRegistry.effect(EffWebsocketSendStatus.class,
                 "(send|post) close with status code %integer% and reason %string% (with|by|using) [websocket] %websockets%",
                 "(send|post) [last|:partial] binary message %string% (with|by|using) [websocket] %websockets%",
                 "(send|post) ping message %string% (with|by|using) [websocket] %websockets%",

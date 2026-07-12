@@ -9,10 +9,10 @@ This is a maintained fork of [Fusezion/SkHttp](https://github.com/Fusezion/SkHtt
 ## Requirements
 
 - Java 21 or newer
-- Skript 2.10 or newer (tested against 2.15.4)
+- Skript 2.15 or newer (2.x uses Skript's modern addon API; tested against 2.15.4)
 - A Bukkit-based server (Paper recommended)
 
-Versions 1.5 and older support Skript 2.7+ on Java 17 and remain available from the original repository's releases.
+For Skript 2.10 through 2.14, use the 1.6.x line (maintained on the `1.6.x` branch). Versions 1.5 and older support Skript 2.7+ on Java 17 and remain available from the original repository's releases.
 
 ## Features
 

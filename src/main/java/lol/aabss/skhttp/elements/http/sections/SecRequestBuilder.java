@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.sections;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
@@ -71,7 +72,7 @@ public class SecRequestBuilder extends Section {
     private Variable<?> var;
 
     static {
-        Skript.registerSection(SecRequestBuilder.class,
+        SkHttpRegistry.section(SecRequestBuilder.class,
                 "http request [builder] stored in %object%"
         );
         ENTRY_VALIDATOR.addEntryData(new ExpressionEntryData<>("url", null, false, String.class));
@@ -242,7 +243,7 @@ public class SecRequestBuilder extends Section {
             }
         }
         if (timeout != null) {
-            request = request.timeout(Duration.ofMillis(timeout.getMilliSeconds()));
+            request = request.timeout(Duration.ofMillis(timeout.getAs(Timespan.TimePeriod.MILLISECOND)));
         } else {
             request = request.timeout(Duration.ofMinutes(1));
         }

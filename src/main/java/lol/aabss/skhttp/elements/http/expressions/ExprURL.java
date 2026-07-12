@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -26,7 +27,7 @@ import java.util.List;
 public class ExprURL extends PropertyExpression<Object, String> {
 
     static {
-        register(ExprURL.class, String.class, "[repsonse|request] ur(l|i)", "httpresponses/httprequests");
+        SkHttpRegistry.property(ExprURL.class, String.class, "[response|request] ur(l|i)", "httpresponses/httprequests");
     }
 
     @Override

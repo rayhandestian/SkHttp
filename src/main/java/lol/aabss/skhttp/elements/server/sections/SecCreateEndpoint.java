@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.server.sections;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.Node;
@@ -8,8 +9,6 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.*;
-import ch.njol.skript.registrations.EventValues;
-import ch.njol.skript.util.Getter;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import lol.aabss.skhttp.SkHttp;
@@ -68,15 +67,10 @@ public class SecCreateEndpoint extends Section {
     }
 
     static {
-        Skript.registerSection(SecCreateEndpoint.class,
+        SkHttpRegistry.section(SecCreateEndpoint.class,
                 "(create|make) [a] [new] (endpoint|context) using %httpserver%"
         );
-        EventValues.registerEventValue(CreateEndpointEvent.class, HttpExchange.class, new Getter<>() {
-            @Override
-            public HttpExchange get(CreateEndpointEvent event) {
-                return event.getExchange();
-            }
-        }, EventValues.TIME_NOW);
+        SkHttpRegistry.eventValue(CreateEndpointEvent.class, HttpExchange.class, CreateEndpointEvent::getExchange);
         ENTRY_VALIDATOR.addEntryData(new ExpressionEntryData<>("method", null, false, String.class));
         ENTRY_VALIDATOR.addEntryData(new ExpressionEntryData<>("path", null, false, String.class));
         ENTRY_VALIDATOR.addSection("trigger", false);
@@ -88,7 +82,7 @@ public class SecCreateEndpoint extends Section {
         server = (Expression<HttpServer>) exprs[0];
         AtomicBoolean delayed = new AtomicBoolean(false);
         Runnable afterLoading = () -> delayed.set(!getParser().getHasDelayBefore().isFalse());
-        trigger = loadCode(getTriggerNode(sectionNode), "create endpoint", afterLoading, CreateEndpointEvent.class);
+        trigger = loadCode(getTriggerNode(sectionNode), "create endpoint", null, afterLoading, CreateEndpointEvent.class);
         if (delayed.get()) {
             Skript.error("Delays can't be used within a Create Endpoint Section");
             return false;

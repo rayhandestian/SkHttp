@@ -1,12 +1,11 @@
 package lol.aabss.skhttp.elements.websocket.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -27,7 +26,7 @@ import static lol.aabss.skhttp.SkHttp.LAST_WEBSOCKET;
 public class ExprLastWebsocket extends SimpleExpression<WebSocket> {
 
     static {
-        Skript.registerExpression(ExprLastWebsocket.class, WebSocket.class, ExpressionType.SIMPLE,
+        SkHttpRegistry.expression(ExprLastWebsocket.class, WebSocket.class, SkHttpRegistry.SIMPLE,
                 "[the] last [http] websocket"
         );
     }

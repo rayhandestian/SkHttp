@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.websocket.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -24,7 +24,7 @@ import java.net.http.WebSocket;
 public class EffSendWebsocketRequest extends AsyncEffect {
 
     static {
-        Skript.registerEffect(EffSendWebsocketRequest.class,
+        SkHttpRegistry.effect(EffSendWebsocketRequest.class,
                 "request %websockets%"
         );
     }

@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.server.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprHttpContextPath extends SimplePropertyExpression<Object, String> {
 
     static {
-        register(ExprHttpContextPath.class, String.class,
+        SkHttpRegistry.property(ExprHttpContextPath.class, String.class,
                 "[:full] [ur(l|i)] path", "httpcontexts/httpexchanges"
         );
     }

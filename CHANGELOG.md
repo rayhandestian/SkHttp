@@ -2,6 +2,13 @@
 
 All notable changes to this maintained fork of SkHttp are documented here. This fork's line begins at 1.6.0; releases 1.0 through 1.5 predate it and came from the original project.
 
+## 2.0.0
+
+Migrates the addon onto Skript's modern `org.skriptlang` registration API (`SyntaxRegistry` / `EventValueRegistry`), replacing the `Skript.registerX`, `EventValues`, `Getter` and `ExpressionType` APIs that are deprecated for removal. This future-proofs SkHttp against their eventual removal (they still work in Skript 2.16). Behavior is unchanged from 1.6.1.
+
+- **Requires Skript 2.15+** and disables itself with a clear message on older Skript. For Skript 2.10 to 2.14, use the 1.6.x line (maintained on the `1.6.x` branch).
+- No functional changes to any syntax. Also clears the remaining deprecated-for-removal API uses (`loadCode`, `Timespan.getMilliSeconds`) and fixes the `response version`/`response url` pattern typos and a lang-file typo picked up along the way.
+
 ## 1.6.1
 
 Bug-fix release following a full-codebase audit of the modules the 1.6.0 review did not cover (Discord webhooks, file download, the client and websocket builders, type parsers, and the remaining expressions). 21 distinct defects were fixed.

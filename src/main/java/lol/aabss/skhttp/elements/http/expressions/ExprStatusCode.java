@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -22,7 +23,7 @@ import java.net.http.HttpResponse;
 public class ExprStatusCode extends SimplePropertyExpression<Object, Integer> {
 
     static {
-        register(ExprStatusCode.class, Integer.class, "(status|response) code", "httpresponses/httpexchanges");
+        SkHttpRegistry.property(ExprStatusCode.class, Integer.class, "(status|response) code", "httpresponses/httpexchanges");
     }
 
 

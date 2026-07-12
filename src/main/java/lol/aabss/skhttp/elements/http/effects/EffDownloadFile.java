@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.http.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 public class EffDownloadFile extends AsyncEffect {
 
     static {
-        Skript.registerEffect(EffDownloadFile.class,
+        SkHttpRegistry.effect(EffDownloadFile.class,
                 "download file from %httpresponse/httprequest/string% to [file] %string%"
         );
     }

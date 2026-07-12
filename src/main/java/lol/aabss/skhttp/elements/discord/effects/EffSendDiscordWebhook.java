@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.discord.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -29,7 +29,7 @@ import java.io.IOException;
 public class EffSendDiscordWebhook extends AsyncEffect {
 
     static {
-        Skript.registerEffect(EffSendDiscordWebhook.class,
+        SkHttpRegistry.effect(EffSendDiscordWebhook.class,
                 "(send|post) %discordwebhook/string% to [discord] webhook with url %string%"
         );
     }

@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.server.expressions.context;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprHttpContextServer extends SimplePropertyExpression<HttpContext, HttpServer> {
 
     static {
-        register(ExprHttpContextServer.class, HttpServer.class, "http[s] server", "httpcontexts");
+        SkHttpRegistry.property(ExprHttpContextServer.class, HttpServer.class, "http[s] server", "httpcontexts");
     }
 
     @Override

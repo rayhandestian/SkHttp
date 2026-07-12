@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.server.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class EffServerLifecycle extends Effect {
 
     static {
-        Skript.registerEffect(EffServerLifecycle.class,
+        SkHttpRegistry.effect(EffServerLifecycle.class,
                 "start [http[ server]] %httpservers%",
                 "(stop|shut[ ]down) [http[ server]] %httpservers% [with delay %integer%]",
                 "close http[ ]exchange %httpexchanges%"

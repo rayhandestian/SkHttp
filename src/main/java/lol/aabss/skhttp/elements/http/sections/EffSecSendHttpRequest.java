@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.http.sections;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -8,8 +8,6 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.*;
-import ch.njol.skript.registrations.EventValues;
-import ch.njol.skript.util.Getter;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import lol.aabss.skhttp.SkHttp;
@@ -39,16 +37,11 @@ import java.util.List;
 public class EffSecSendHttpRequest extends EffectSection {
 
     static {
-        Skript.registerSection(EffSecSendHttpRequest.class,
+        SkHttpRegistry.section(EffSecSendHttpRequest.class,
                 "(send|post) [[:a]sync[hronous]] [http] request using [[client] %-httpclient% and] [request] %httprequest%",
                 "(send|post) [http] request using [[client] %-httpclient% and] [request] %httprequest% [:a]synchronously"
         );
-        EventValues.registerEventValue(SendHttpRequestEvent.class, HttpResponse.class, new Getter<>() {
-            @Override
-            public HttpResponse<?> get(SendHttpRequestEvent event) {
-                return event.getResponse();
-            }
-        }, EventValues.TIME_NOW);
+        SkHttpRegistry.eventValue(SendHttpRequestEvent.class, HttpResponse.class, SendHttpRequestEvent::getResponse);
     }
 
     public static class SendHttpRequestEvent extends Event {

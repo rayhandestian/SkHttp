@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprMethod extends SimplePropertyExpression<Object, String> {
 
     static {
-        register(ExprMethod.class, String.class, "[request] method", "httprequests/httpexchanges");
+        SkHttpRegistry.property(ExprMethod.class, String.class, "[request] method", "httprequests/httpexchanges");
     }
 
     @Override

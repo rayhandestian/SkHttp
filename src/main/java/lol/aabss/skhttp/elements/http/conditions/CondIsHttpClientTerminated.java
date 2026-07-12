@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.http.conditions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.conditions.base.PropertyCondition;
@@ -24,7 +25,7 @@ public class CondIsHttpClientTerminated extends PropertyCondition<HttpClient> {
 
     static {
         if (Skript.methodExists(HttpClient.class, "isTerminated")) {
-            register(CondIsHttpClientTerminated.class, "terminated", "httpclients");
+            SkHttpRegistry.propertyCondition(CondIsHttpClientTerminated.class, "terminated", "httpclients");
         }
     }
 

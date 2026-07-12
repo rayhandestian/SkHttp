@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.server.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.AsyncEffect;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class EffPublishHttpSite extends AsyncEffect {
 
     static {
-        Skript.registerEffect(EffPublishHttpSite.class,
+        SkHttpRegistry.effect(EffPublishHttpSite.class,
                 "(publish|make|create) [a] [new] [web]site using %httpserver% " +
                         "(from|at) [path] %string% [and] (from|with) [folder|file[s]] %string%"
         );

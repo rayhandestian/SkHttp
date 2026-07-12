@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.server.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class EffExchangeRespond extends Effect {
 
     static {
-        Skript.registerEffect(EffExchangeRespond.class,
+        SkHttpRegistry.effect(EffExchangeRespond.class,
                 "respond with [response] code %integer% [and message %-object%] [using %-httpexchange%]",
                 "(send|post) [response] code %integer% [and message %-object%] [using %-httpexchange%]"
         );

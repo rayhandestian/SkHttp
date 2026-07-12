@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.websocket.sections;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
@@ -54,7 +55,7 @@ public class SecWebsocketRequestBuilder extends EffectSection {
     private Variable<?> var;
 
     static {
-        Skript.registerSection(SecWebsocketRequestBuilder.class,
+        SkHttpRegistry.section(SecWebsocketRequestBuilder.class,
                 "(register|make|send) [a] [new] websocket request with [ur(l|i)] %string% and store it in %object%"
         );
         ENTRY_VALIDATOR.addSection("headers", true);

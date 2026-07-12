@@ -5,6 +5,8 @@ import lol.aabss.skhttp.objects.Logger;
 import lol.aabss.skhttp.objects.server.HttpContext;
 import lol.aabss.skhttp.objects.server.HttpExchange;
 import lol.aabss.skhttp.objects.server.HttpServer;
+import org.skriptlang.skript.addon.SkriptAddon;
+import org.skriptlang.skript.util.ClassLoader;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -42,9 +44,21 @@ public final class SkHttp extends JavaPlugin {
             try {
                 getCommand("skhttp").setExecutor(this);
                 getCommand("skhttp").setTabCompleter(this);
-                Skript.registerAddon(this)
-                        .loadClasses("lol.aabss.skhttp", "elements")
-                        .setLanguageFileDirectory("lang");
+                if (!Skript.classExists("org.skriptlang.skript.bukkit.lang.eventvalue.EventValueRegistry")) {
+                    LOGGER.error("SkHttp 2.0 requires Skript 2.15 or newer. Please update Skript (or use SkHttp 1.6.x on older Skript).");
+                    getPluginLoader().disablePlugin(this);
+                    return;
+                }
+                SkriptAddon addon = Skript.instance().registerAddon(SkHttp.class, "SkHttp");
+                SkHttpRegistry.init(addon);
+                addon.localizer().setSourceDirectories("lang", getDataFolder().getAbsolutePath() + "/lang");
+                // The jar must be passed explicitly: the no-jar overload cannot enumerate classes reliably, and Paper remaps the plugin jar, so without this the element static initializers never run and nothing registers.
+                ClassLoader.builder()
+                        .basePackage("lol.aabss.skhttp.elements")
+                        .initialize(true)
+                        .deep(true)
+                        .build()
+                        .loadClasses(SkHttp.class, getFile());
                 metrics.addCustomChart(new Metrics.SimplePie("skript_version", () -> Skript.getVersion().toString()));
                 if (WEBSITE_FOLDER.mkdirs()) {
                     generateExampleSite();

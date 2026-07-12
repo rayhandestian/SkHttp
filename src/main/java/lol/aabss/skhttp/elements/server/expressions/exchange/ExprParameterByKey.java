@@ -1,12 +1,11 @@
 package lol.aabss.skhttp.elements.server.expressions.exchange;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprParameterByKey extends SimpleExpression<Object> {
 
     static {
-        Skript.registerExpression(ExprParameterByKey.class, Object.class, ExpressionType.COMBINED,
+        SkHttpRegistry.expression(ExprParameterByKey.class, Object.class, SkHttpRegistry.COMBINED,
                 "(parameter|arg[ument]) of %httpexchange% (with|by|from) key %string%"
         );
     }

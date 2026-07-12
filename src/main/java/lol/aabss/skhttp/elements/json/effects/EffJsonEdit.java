@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.json.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -31,7 +31,7 @@ public class EffJsonEdit extends Effect {
 
     static {
         if (SkHttp.instance.getConfig().getBoolean("json-elements", true)) {
-            Skript.registerEffect(EffJsonEdit.class,
+            SkHttpRegistry.effect(EffJsonEdit.class,
                     "(put|add) [[key] %-string% [and]] [value] %object% in %jsonobjects/jsonarrays%",
                     "remove [:first|all] %object% in %jsonarrays/jsonobjects%",
                     "remove [object at] index [of] %integer% in %jsonarrays/jsonobjects%"

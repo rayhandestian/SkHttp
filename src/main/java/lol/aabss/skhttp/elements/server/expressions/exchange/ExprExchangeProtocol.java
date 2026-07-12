@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.server.expressions.exchange;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprExchangeProtocol extends SimplePropertyExpression<HttpExchange, String> {
 
     static {
-        register(ExprExchangeProtocol.class, String.class, "[http[s]] protocol", "httpexchanges");
+        SkHttpRegistry.property(ExprExchangeProtocol.class, String.class, "[http[s]] protocol", "httpexchanges");
     }
 
     @Override

@@ -1,4 +1,5 @@
 package lol.aabss.skhttp.elements.server.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprHttpAddress extends SimplePropertyExpression<Object, String> {
 
     static {
-        register(ExprHttpAddress.class, String.class, "[:local|remote] address", "httpexchanges/httpservers");
+        SkHttpRegistry.property(ExprHttpAddress.class, String.class, "[:local|remote] address", "httpexchanges/httpservers");
     }
 
     private boolean local;

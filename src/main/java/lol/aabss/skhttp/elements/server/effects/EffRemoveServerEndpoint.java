@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.server.effects;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class EffRemoveServerEndpoint extends Effect {
 
     static {
-        Skript.registerEffect(EffRemoveServerEndpoint.class,
+        SkHttpRegistry.effect(EffRemoveServerEndpoint.class,
                 "(remove|delete) endpoint %httpcontexts/strings% from [http[server]] %httpserver%"
         );
     }

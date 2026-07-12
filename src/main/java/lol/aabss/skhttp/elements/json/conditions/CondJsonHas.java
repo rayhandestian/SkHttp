@@ -1,6 +1,6 @@
 package lol.aabss.skhttp.elements.json.conditions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -32,7 +32,7 @@ public class CondJsonHas extends Condition {
 
     static {
         if (SkHttp.instance.getConfig().getBoolean("json-elements", true)) {
-            Skript.registerCondition(CondJsonHas.class,
+            SkHttpRegistry.condition(CondJsonHas.class,
                     "%jsonarrays/jsonobjects% (has|contains) (value|:key) %object%"
             );
         }

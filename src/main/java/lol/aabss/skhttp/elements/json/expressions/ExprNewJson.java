@@ -1,13 +1,12 @@
 package lol.aabss.skhttp.elements.json.expressions;
+import lol.aabss.skhttp.SkHttpRegistry;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.util.SimpleExpression;
@@ -34,7 +33,7 @@ public class ExprNewJson extends SimpleExpression<JsonElement> {
 
     static {
         if (SkHttp.instance.getConfig().getBoolean("json-elements", true)) {
-            Skript.registerExpression(ExprNewJson.class, JsonElement.class, ExpressionType.COMBINED,
+            SkHttpRegistry.expression(ExprNewJson.class, JsonElement.class, SkHttpRegistry.COMBINED,
                     "[a] [new] json[ ](object|:array)",
                     "json[[ ](object|array)] from [string|object] %objects%"
             );

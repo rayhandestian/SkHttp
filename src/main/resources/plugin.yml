@@ -5,7 +5,7 @@ api-version: '1.13'
 depend: [Skript]
 softdepend: [SkJson]
 authors: [aabss]
-description: Http Client and other web things in a skript addon. 
+description: Http client, http server, websockets and discord webhooks for Skript. Requires Skript 2.15+.
 commands:
   skhttp:
     permission: skhttp.command
