@@ -2,6 +2,13 @@
 
 All notable changes to this maintained fork of SkHttp are documented here. This fork's line begins at 1.6.0; releases 1.0 through 1.5 predate it and came from the original project.
 
+## 2.0.1
+
+Bug-fix release: HTTP(S) requests now negotiate TLS 1.3, so requests to TLS-1.3-only endpoints work on JVMs whose default client TLS is capped at 1.2.
+
+- Some hardened JVM images (for example certain hosting panels) ship a `java.security` that leaves TLS 1.3 out of the default enabled client protocols and omits the TLS 1.3 cipher suites (`TLS_AES_*`), even though 1.3 is supported and not in `jdk.tls.disabledAlgorithms`. A bare `HttpClient` then only spoke TLS 1.2 and failed against TLS-1.3-only servers (for example Cloudflare zones with min-TLS 1.3) with `Received fatal alert: protocol_version`.
+- All clients SkHttp creates (the default `send request` client, `a new http client`, the `http client builder` section, and the websocket client) now enable TLSv1.3 and TLSv1.2 and merge the 1.3 cipher suites into the enabled set, keeping HTTPS hostname verification on. No new syntax, and on a normally configured JVM this restates the existing defaults, so behavior is unchanged there.
+
 ## 2.0.0
 
 Migrates the addon onto Skript's modern `org.skriptlang` registration API (`SyntaxRegistry` / `EventValueRegistry`), replacing the `Skript.registerX`, `EventValues`, `Getter` and `ExpressionType` APIs that are deprecated for removal. This future-proofs SkHttp against their eventual removal (they still work in Skript 2.16). Behavior is unchanged from 1.6.1.
