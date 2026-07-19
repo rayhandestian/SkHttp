@@ -66,7 +66,7 @@ public class EffSecSendHttpRequest extends EffectSection {
         }
     }
 
-    private static final HttpClient DEFAULT_CLIENT = HttpClient.newHttpClient();
+    private static final HttpClient DEFAULT_CLIENT = lol.aabss.skhttp.objects.HttpClientFactory.newClient();
 
     @Nullable
     private Trigger trigger;

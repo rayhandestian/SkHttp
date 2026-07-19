@@ -138,7 +138,7 @@ public class SecWebsocketRequestBuilder extends EffectSection {
             SkHttp.LOGGER.warn("Invalid websocket url: " + url);
             return;
         }
-        WebSocket.Builder builder = HttpClient.newHttpClient().newWebSocketBuilder();
+        WebSocket.Builder builder = lol.aabss.skhttp.objects.HttpClientFactory.newClient().newWebSocketBuilder();
         for (String key : headers.keySet()) {
             builder = builder.header(key, headers.get(key));
         }

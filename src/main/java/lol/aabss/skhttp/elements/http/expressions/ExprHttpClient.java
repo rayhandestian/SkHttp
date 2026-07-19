@@ -31,7 +31,7 @@ public class ExprHttpClient extends SimpleExpression<HttpClient> {
 
     @Override
     protected HttpClient @NotNull [] get(@NotNull Event e) {
-        return new HttpClient[]{HttpClient.newHttpClient()};
+        return new HttpClient[]{lol.aabss.skhttp.objects.HttpClientFactory.newClient()};
     }
 
     @Override

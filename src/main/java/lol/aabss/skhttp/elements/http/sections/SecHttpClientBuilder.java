@@ -126,7 +126,7 @@ public class SecHttpClientBuilder extends Section {
     }
 
     private void execute(Event event, Runnable runnable) {
-        HttpClient.Builder builder = HttpClient.newBuilder();
+        HttpClient.Builder builder = lol.aabss.skhttp.objects.HttpClientFactory.builder();
         if (timeout != null) {
             Timespan timeout = this.timeout.getSingle(event);
             if (timeout != null) {
